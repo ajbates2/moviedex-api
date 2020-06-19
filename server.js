@@ -9,8 +9,8 @@ const app = express()
 app.use(helmet())
 app.use(cors())
 
-const morganSetting = process.env.NODE_ENV === 'production' ? 'tiny' : 'dev'
-app.use(morgan(morganSetting))
+
+app.use(morgan('tiny'))
 
 app.use(function validateBearerToken(req, res, next) {
     const authToken = req.get('Authorization')
