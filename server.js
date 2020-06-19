@@ -9,7 +9,8 @@ const app = express()
 app.use(helmet())
 app.use(cors())
 
-app.use(morgan('dev'))
+const morganSetting = process.env.NODE_ENV === 'production' ? 'tiny' : 'dev'
+app.use(morgan(morganSetting))
 
 app.use(function validateBearerToken(req, res, next) {
     const authToken = req.get('Authorization')
@@ -21,20 +22,21 @@ app.use(function validateBearerToken(req, res, next) {
     next()
 })
 
+function getMovieConditional(key, response, target) {
+    if (key) {
+        return response.filter(movie =>
+            movie[target].toLowerCase().includes(key.toLowerCase())
+        )}
+    else {
+        return response
+    }
+}
+
 function handletGetMovies(req, res) {
     let response = MOVIEDEX
 
-    if (req.query.genre) {
-        response = response.filter(movie =>
-            movie.genre.toLowerCase().includes(req.query.genre.toLowerCase())
-        )
-    }
-
-    if (req.query.country) {
-        response = response.filter(movie =>
-            movie.country.toLowerCase().includes(req.query.country.toLowerCase())
-        )
-    }
+    response = getMovieConditional(req.query.genre, response, 'genre')
+    response = getMovieConditional(req.query.country, response, 'country')
 
     if (req.query.avg_vote) {
         response = response.filter(vote =>
@@ -46,8 +48,17 @@ function handletGetMovies(req, res) {
 
 app.get('/movies', handletGetMovies)
 
-const PORT = 8000
+app.use((error, req, res, next) => {
+    let response
+    if (process.env.NODE_ENV === 'production') {
+      response = { error: { message: 'server error' }}
+    } else {
+      response = { error }
+    }
+    res.status(500).json(response)
+  })
+
+const PORT = process.env.PORT || 8000
 
 app.listen(PORT, () => {
-    console.log(`Server listening at http://localhost:${PORT}`)
 })
