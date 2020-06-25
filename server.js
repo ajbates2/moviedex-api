@@ -6,11 +6,14 @@ const cors = require('cors')
 const MOVIEDEX = require('./moviedex.json')
 
 const app = express()
+
+const morganOption = (NODE_ENV === 'production')
+    ? 'tiny'
+    : 'dev';
+
+app.use(morgan(morganOption))
 app.use(helmet())
 app.use(cors())
-
-
-app.use(morgan('tiny'))
 
 app.use(function validateBearerToken(req, res, next) {
     const authToken = req.get('Authorization')
